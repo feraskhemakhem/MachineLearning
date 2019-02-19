@@ -1,5 +1,5 @@
 from helper import *
-from solution_sol import *
+from solution import *
 
 
 
