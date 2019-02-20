@@ -44,16 +44,33 @@ class LogisticRegression(object):
             gradient: An array with shape [n_features,].
         """
         ### YOUR CODE HERE
-        preds = predict(X)
+        Ein = 0
+        n_samples = len(X)
+        n_features = len(X[0])
         
-        # partial derivates
-        gradient = np.matmul(X, preds - y)
+        # if not third order , do what's under
+        # based on slide 21 of presentation 09 from ecampus
+        
+        if self.third_order:
+            W = []
+            for j in range(n_features): # 9
+                Ein = 0
+                for i in range(n_samples): # samples
+                    Ein += self.W[i] * X[i][j]
+                W.append(Ein)
+        
+            return -1*np.sign(W)
+                            
+            
+        for n in range(n_samples):
+            # Ein = 1/N Sum to N (ln ( 1 + e ^ (-yn * wTn * xn)))
+            Ein += y[n]*X[n] / (1 + np.power(np.e, y[n]*np.matmul(X[n], self.W)))
+        
+        Ein /= float(n_samples)
         
         
-        gradient = gradient * self.lr / len(X)
+        return -1*Ein
         
-       
-        return gradient
         ### END YOUR CODE
 
 
@@ -69,24 +86,28 @@ class LogisticRegression(object):
             self: Returns an instance of self.
         """
         ### YOUR CODE HERE
-        self.W = np([0, 0, 0])
-        for i in range(0, self.max_iter):
-            # update weights and get gradient
+        
+        # if we are working with a third order polynomial, transform
+        size = 3
+        self.W = []
+        if self.third_order:
+            X = third_order(X[1:2])
+            size = 9
+            
+        # if normal, 
+        for a in range(size):
+            self.W.append(1)
+            
+        for a in range(0, self.max_iter):
+            # get nv, the gradient
             gradient = self._gradient(X, y)
-            self.W -= gradient
             
-            # predict
-            preds = predict(X)
-            
-            # find error when y = 1
-            err1 = -y*np.log(preds)
-            
-            # find error when y = -1
-            err2 = (1-labels)*np.log(1-predictions)
-            
-            # take cost and apply
-            cost = (err1 + err2) / len(y)
-
+            # w(t+1) = w(t) + nv
+            self.W -= self.lr * gradient
+			
+			# continue until || gradient || is 0
+            if np.linalg.norm(gradient) is 0:
+                break
 
         ### END YOUR CODE
         return self
@@ -116,9 +137,17 @@ class LogisticRegression(object):
             preds: An array of shape [n_samples,]. Only contains 1 or -1.
         """
         ### YOUR CODE HERE
+        if self.third_order:
+            X = third_order(X[1:2])
         
-        #sign or sigmoid?
-        return np.sign(np.matmul(X, self.W))
+        # probability
+        preds = []
+        for i in range(len(X)):
+            if (1 / (1 + np.power(np.e, -1*(np.matmul(X[i], self.W))))) >= 0.5:
+                preds.append(1)
+            else:
+                preds.append(-1)
+        return preds
 
         ### END YOUR CODE
 
