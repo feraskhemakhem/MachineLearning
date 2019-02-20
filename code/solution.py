@@ -15,12 +15,12 @@ def third_order(X):
 	### YOUR CODE HERE
     poly= []
     for sample in X:
-        x1, x2 = sample[0], sample[1]
+        x1, x2 = sample[1], sample[2]
         poly.append([1, x1, x2, np.power(x1, 2), x1*x2, 
-           np.power(x2,2), np.power(x1,2)*x2, x1*np.power(x2,2),
+           np.power(x2,2), np.power(x1, 3), np.power(x1,2)*x2, x1*np.power(x2,2),
            np.power(x2, 3)])
         
-    return poly
+    return np.array(poly)
     ### END YOUR CODE
 
 
@@ -47,27 +47,13 @@ class LogisticRegression(object):
         Ein = 0
         n_samples = len(X)
         n_features = len(X[0])
-        
-        # if not third order , do what's under
-        # based on slide 21 of presentation 09 from ecampus
-        
-        if self.third_order:
-            W = []
-            for j in range(n_features): # 9
-                Ein = 0
-                for i in range(n_samples): # samples
-                    Ein += self.W[i] * X[i][j]
-                W.append(Ein)
-        
-            return -1*np.sign(W)
-                            
-            
+    
+    
         for n in range(n_samples):
             # Ein = 1/N Sum to N (ln ( 1 + e ^ (-yn * wTn * xn)))
-            Ein += y[n]*X[n] / (1 + np.power(np.e, y[n]*np.matmul(X[n], self.W)))
+            Ein += np.dot(y[n],X[n]) / (1 + np.power(np.e, y[n]*np.matmul(X[n], self.W)))
         
         Ein /= float(n_samples)
-        
         
         return -1*Ein
         
@@ -86,28 +72,28 @@ class LogisticRegression(object):
             self: Returns an instance of self.
         """
         ### YOUR CODE HERE
-        
         # if we are working with a third order polynomial, transform
         size = 3
         self.W = []
         if self.third_order:
-            X = third_order(X[1:2])
-            size = 9
+            X = third_order(X)
+            size = 10
             
-        # if normal, 
+        # if normal, 3, if third order, 9
         for a in range(size):
-            self.W.append(1)
+            self.W.append(0)
             
         for a in range(0, self.max_iter):
             # get nv, the gradient
-            gradient = self._gradient(X, y)
-            
-            # w(t+1) = w(t) + nv
-            self.W -= self.lr * gradient
-			
-			# continue until || gradient || is 0
-            if np.linalg.norm(gradient) is 0:
-                break
+
+                gradient = self._gradient(X, y)
+                
+                # w(t+1) = w(t) + nv
+                self.W -= self.lr * gradient
+    			
+    			# continue until || gradient || is 0
+                if np.linalg.norm(gradient) is 0:
+                    break
 
         ### END YOUR CODE
         return self
@@ -138,8 +124,8 @@ class LogisticRegression(object):
         """
         ### YOUR CODE HERE
         if self.third_order:
-            X = third_order(X[1:2])
-        
+            X = third_order(X)
+    
         # probability
         preds = []
         for i in range(len(X)):
