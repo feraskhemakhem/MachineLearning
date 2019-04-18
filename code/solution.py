@@ -22,10 +22,11 @@ class PCA():
 			X: The data matrix of shape [n_samples, n_features].
 			n_components: The number of principal components. A scaler number.
 		'''
-
+		#print(len(X), len(X[0]))
 		self.n_components = n_components
-		self.X = X
-		self.Up, self.Xp = self._do_pca()
+		self.n_samples = len(X)
+		self.X = np.transpose(X)
+		self.X_bar, self.Up, self.Xp = self._do_pca()
 
 	
 	def _do_pca(self):
@@ -35,7 +36,20 @@ class PCA():
 			Up: Principal components (transform matrix) of shape [n_features, n_components].
 			Xp: The reduced data matrix after PCA of shape [n_samples, n_components].
 		'''
-		pass
+		# n_features is n, n_components is k
+
+		# Xline = 1/n * X * 1_n aka the mean
+		Xline = np.mean(self.X)
+		# Xtilde = (X - Xline 1_n^T) aka centered matrix
+		Xtilde = self.X - np.dot(Xline, np.ones(self.n_samples))
+		# Xtilde = U Sigmatilde V^T
+		U, sigmatilde, V = np.linalg.svd(Xtilde)
+		# G = U_k (first k columns of U) - https://stackoverflow.com/questions/10625096/extracting-first-n-columns-of-a-numpy-matrix/30244543
+		G = U[:, :self.n_components]
+
+		# Z = G^T Xline -- transpose back bc X is backwards too
+		Z = np.transpose(np.matmul(np.transpose(G), Xtilde))
+		return Xline, G, Z
 
 	def get_reduced(self, X=None):
 		'''
@@ -61,8 +75,9 @@ class PCA():
 		Return:
 		X_re: The reconstructed matrix of shape [n_samples, n_features].
 		'''
-		pass
-
+		# PCA reconstruction = PC scores * Eigenvectors ^T + Mean - https://stats.stackexchange.com/questions/229092/how-to-reverse-pca-and-reconstruct-original-variables-from-several-principal-com\
+		# X_re : Xp * Up (which is really G, the first k columns of U) + X_bar
+		return np.matmul(Xp, np.transpose(self.Up)) + self.X_bar
 
 def reconstruct_error(A, B):
 	'''
@@ -74,5 +89,6 @@ def reconstruct_error(A, B):
 	Return: 
 	error: the Frobenius norm's square of the matrix A-B. A scaler number.
 	'''
-	pass
+	return np.linalg.norm(A - B, 'fro')
+	
 
