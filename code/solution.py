@@ -1,7 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import pickle, tqdm, os
-
+from keras.datasets import cifar10
+import time
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 def load_data(data_dir):
     '''
@@ -25,6 +27,10 @@ def load_data(data_dir):
         y_test: An numpy array of shape [10000,].
             (dtype=np.int64)
     '''
+
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    y_train = y_train.reshape(y_train.shape[0])
+    y_test = y_test.reshape(y_test.shape[0])
 
     return x_train, y_train, x_test, y_test
 
@@ -55,7 +61,7 @@ def preprocess(train_images, test_images, normalize=False):
             (dtype=np.float64)
     '''
 
-    return train_images, test_images
+    return np.true_divide(train_images, 255), np.true_divide(test_images, 255)
 
 
 class LeNet_Cifar10():
@@ -114,6 +120,26 @@ class LeNet_Cifar10():
         Returns:
             logits: Tensor of shape [None, n_classes].
         '''
+        tensor = tf.layers.conv2d(X, 6, (5, 5))
+        tensor = tf.nn.relu(tensor)
+
+        tensor = tf.layers.max_pooling2d(tensor, (2, 2), 2)
+
+        tensor = tf.layers.conv2d(tensor, 16, (5,5))
+        tensor = tf.nn.relu(tensor)
+
+        tensor = tf.layers.max_pooling2d(tensor, (2, 2), 2)
+
+        tensor = tf.layers.flatten(tensor)
+
+        tensor = tf.layers.dense(tensor, 120)
+        tensor = tf.nn.relu(tensor)
+
+        tensor = tf.layers.dense(tensor, 84)
+        tensor = tf.nn.relu(tensor)
+
+        logits = tf.layers.dense(tensor, self.n_classes)
+        logits = tf.nn.softmax(logits)
 
         return logits
 
